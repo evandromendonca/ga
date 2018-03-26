@@ -23,21 +23,16 @@ def readFile():
         else:
             cities_distances[city_to] = { city_from: float(distance) }
 
-    #for e in cities_distances:
-    #    for i in cities_distances[e]:
-    #        print e + ' ' + i['name'] + ' ' + str(i['distance']) 
-    
-    #print cities_distances
-    # if ('A' in cities_distances):
-    #     if ('B' in cities_distances['A']):
-    #         print cities_distances['A']['B']
-
 class cities_tour:  
     def randonizeCities(self):
         for city in cities_distances:
             self.cities.append(city)
 
         random.shuffle(self.cities)
+    
+    def nullalizeCities(self):
+        for city in cities_distances:
+            self.cities.append(None)
 
     def fitness(self):
         total_distance = 0
@@ -52,9 +47,12 @@ class cities_tour:
     def __str__(self):
         return str(self.cities)
 
-    def __init__(self):
+    def __init__(self, initialize):
         self.cities = []
-        self.randonizeCities()
+        if initialize:
+            self.randonizeCities()
+        else:
+            self.nullalizeCities()
 
 class population:
     def getFittest(self):
@@ -77,12 +75,12 @@ class population:
         self.size = size
         if initalize == True:
             for i in range(0, size):
-                city_tour = cities_tour()
+                city_tour = cities_tour(initalize)
                 self.tours.append(city_tour)
 
 class ga:
     mutation_rate = 0.1
-    tournament_size = 4
+    tournament_size = 3
     elitism = True
 
     def mutate(self, tour):
@@ -98,8 +96,26 @@ class ga:
                 tour.cities[city1_index] = city2
                 tour.cities[city2_index] = city1
 
-    def crossover(self, parent_1, parent_2):         
-        return parent_1
+    def crossover(self, parent_1, parent_2):
+        start_pos = int(random.random() * len(parent_1.cities))
+        end_pos = int(random.random() * len(parent_1.cities))
+
+        child = cities_tour(False)
+
+        for i in range(0, len(parent_1.cities)):
+            if start_pos < end_pos and i > start_pos and i < end_pos:
+                child.cities[i] = parent_1.cities[i]
+            elif start_pos > end_pos and not(i < start_pos and i > end_pos):
+                    child.cities[i] = parent_1.cities[i]
+
+        for i in range(0, len(parent_2.cities)):
+            if not(parent_2.cities[i] in child.cities):
+                for j in range(0, len(parent_2.cities)):
+                    if child.cities[j] is None:
+                        child.cities[j] = parent_2.cities[i]
+                        break
+
+        return child
 
     def tournament_selection(self, pop):
         tours_sample = random.sample(pop.tours, ga.tournament_size)
@@ -133,7 +149,7 @@ class ga:
 
 if "__main__":
     readFile()
-    pop = population(5, True)
+    pop = population(4, True)
     # for t in a.tours:
     #     print t
 
@@ -146,8 +162,8 @@ if "__main__":
 
     _ga = ga()
 
-    for i in range(0, 300):
-        pop = _ga.evolve_population(pop, 5)
+    for i in range(0, 2000):
+        pop = _ga.evolve_population(pop, 4)
         print 'step ' + str(i) +  ' distance = ' + str(pop.getFittest())
         #print pop.getFittest()
         print pop.getFittest().fitness()
