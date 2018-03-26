@@ -1,14 +1,11 @@
 import random
 
-cities_number = 0
 # keep the cities distances (dict of dict)
 cities_distances = {}
 
 # read the file with the cities distances
 def readFile():
     file = open('input-file', 'r')
-    
-    cities_number = int(file.readline())
     
     for line in file:
         line_arr = line.split(' ')
@@ -50,23 +47,20 @@ class cities_tour:
             city_to = self.cities[i]
             total_distance += cities_distances[city_from][city_to]
 
-        self.fit = total_distance
+        return total_distance
 
     def __str__(self):
-        return str(self.cities) + ' ' + str(self.fit)
+        return str(self.cities)
 
-    def __init__(self, size):
-        self.size = size
+    def __init__(self):
         self.cities = []
-        self.fit = 0
         self.randonizeCities()
-        self.fitness()
 
 class population:
     def getFittest(self):
         fittest = self.tours[0]
         for tour in self.tours[1:]:
-            if tour.fit < fittest.fit:
+            if tour.fitness() < fittest.fitness():
                 fittest = tour
         return fittest
 
@@ -74,35 +68,45 @@ class population:
         if len(self.tours) < self.size:
             self.tours.append(tour)
 
+    def appendTours(self, tours):
+        if len(self.tours) + len(tours) <= self.size:
+            self.tours.extend(tours)
+
     def __init__(self, size, initalize):
         self.tours = []
         self.size = size
         if initalize == True:
             for i in range(0, size):
-                city_tour = cities_tour(cities_number)
+                city_tour = cities_tour()
                 self.tours.append(city_tour)
 
 class ga:
-    mutation_rate = 0.015
-    tournament_size = 5
+    mutation_rate = 0.1
+    tournament_size = 4
     elitism = True
 
     def mutate(self, tour):
-        for city1 in tour:
-            if random.random() < ga.mutation_rate:
-                city2 = random.choice(tour)
-                
-                city1_index = tour.index(city1)
-                city2_index = tour.index(city2)
+        cities = tour.cities
 
-                tour[city1_index] = city2
-                tour[city2_index] = city1
+        for city1 in cities:
+            if random.random() < ga.mutation_rate:
+                city2 = random.choice(cities)
+                
+                city1_index = cities.index(city1)
+                city2_index = cities.index(city2)
+
+                tour.cities[city1_index] = city2
+                tour.cities[city2_index] = city1
 
     def crossover(self, parent_1, parent_2):         
-        return True
+        return parent_1
 
-    def tournament_selection(self, population):
-        return population
+    def tournament_selection(self, pop):
+        tours_sample = random.sample(pop.tours, ga.tournament_size)
+        tournament_population = population(pop.size, False)
+        tournament_population.appendTours(tours_sample)
+
+        return tournament_population.getFittest()
 
     def evolve_population(self, pop, size):
         new_population = population(size, False)
@@ -129,9 +133,24 @@ class ga:
 
 if "__main__":
     readFile()
-    a = population(5, True)
-    for t in a.tours:
-        print t
+    pop = population(5, True)
+    # for t in a.tours:
+    #     print t
 
-    print 'fittest'
-    print a.getFittest()
+    # print 'fittest'
+    # print a.getFittest()
+
+    print 'initial distance'
+    print pop.getFittest()
+    print pop.getFittest().fitness()
+
+    _ga = ga()
+
+    for i in range(0, 300):
+        pop = _ga.evolve_population(pop, 5)
+        print 'step ' + str(i) +  ' distance = ' + str(pop.getFittest())
+        #print pop.getFittest()
+        print pop.getFittest().fitness()
+
+    print 'the final population is: ' + str(pop.getFittest())
+    print 'the final fitness is: ' + str(pop.getFittest().fitness())
