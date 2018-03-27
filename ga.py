@@ -5,23 +5,31 @@ cities_distances = {}
 
 # read the file with the cities distances
 def readFile():
-    file = open('input-file', 'r')
+    cities_names_file = open('cities-names', 'r')
+    cities_distances_file = open('input-file', 'r')
     
-    for line in file:
-        line_arr = line.split(' ')
-        city_from = line_arr[0]
-        city_to = line_arr[1]
-        distance = line_arr[2]
+    cities_names = []
+    for name in cities_names_file:
+        cities_names.append(str(name))
+    
+    for city_from in cities_names:
+        distances_arr = cities_distances_file.readline().split(';')
+        for i in range(0 ,len(distances_arr)):
+            city_to = cities_names[i]
+            distance = distances_arr[i]
 
-        if city_from in cities_distances:
-            cities_distances[city_from][city_to] = float(distance)
-        else:
-            cities_distances[city_from] = { city_to: float(distance) }
+            if float(distance) == 0:
+                continue
 
-        if city_to in cities_distances:
-            cities_distances[city_to][city_from] = float(distance)
-        else:
-            cities_distances[city_to] = { city_from: float(distance) }
+            if city_from in cities_distances:
+                cities_distances[city_from][city_to] = float(distance)
+            else:
+                cities_distances[city_from] = { city_to: float(distance) }
+
+            if city_to in cities_distances:
+                cities_distances[city_to][city_from] = float(distance)
+            else:
+                cities_distances[city_to] = { city_from: float(distance) }
 
 class cities_tour:  
     def randonizeCities(self):
@@ -79,8 +87,8 @@ class population:
                 self.tours.append(city_tour)
 
 class ga:
-    mutation_rate = 0.1
-    tournament_size = 3
+    mutation_rate = 0.015
+    tournament_size = 10
     elitism = True
 
     def mutate(self, tour):
@@ -149,24 +157,20 @@ class ga:
 
 if "__main__":
     readFile()
-    pop = population(4, True)
-    # for t in a.tours:
-    #     print t
-
-    # print 'fittest'
-    # print a.getFittest()
+    pop = population(20, True)
 
     print 'initial distance'
-    print pop.getFittest()
     print pop.getFittest().fitness()
-
+    print 'initial population'
+    print pop.getFittest()
+    
     _ga = ga()
 
-    for i in range(0, 2000):
-        pop = _ga.evolve_population(pop, 4)
-        print 'step ' + str(i) +  ' distance = ' + str(pop.getFittest())
-        #print pop.getFittest()
-        print pop.getFittest().fitness()
+    for i in range(0, 100):
+        pop = _ga.evolve_population(pop, 20)
+        print 'step ' + str(i) +  ' distance = ' + str(pop.getFittest().fitness()) #+ str(pop.getFittest())
 
-    print 'the final population is: ' + str(pop.getFittest())
-    print 'the final fitness is: ' + str(pop.getFittest().fitness())
+    print 'final distance'
+    print pop.getFittest().fitness()
+    print 'final population' 
+    print pop.getFittest()    
